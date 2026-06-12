@@ -1,0 +1,32 @@
+{
+  "name": "midi-control",
+  "author": "Sykerö Software",
+  "version": "1.0.0",
+  "keywords": ["pebble-app"],
+  "private": true,
+  "dependencies": {},
+  "pebble": {
+    "displayName": "MIDI Recorder",
+    "uuid": "4F677262-4364-4F8F-800A-E0FB6C439096",
+    "sdkVersion": "3",
+    "enableMultiJS": false,
+    "targetPlatforms": ["aplite", "basalt", "chalk", "diorite", "emery", "flint", "gabbro"],
+    "capabilities": [],
+    "watchapp": { "watchface": false },
+    "companionApp": {
+      "android": {
+        "apps": [
+          { "package": "fi.sykero.midirecorder" }
+        ]
+      }
+    },
+    "messageKeys": [
+      "CMD",
+      "ST_RECORDING",
+      "ST_DEVICE_NAME",
+      "ST_REC_START",
+      "ST_CONN"
+    ],
+    "resources": { "media": [] }
+  }
+}
