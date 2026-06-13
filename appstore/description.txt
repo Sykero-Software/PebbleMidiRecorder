@@ -1,0 +1,1 @@
+Control MIDI Recorder from your wrist. Start and stop recording with one tap, and see the current recording time and the connected MIDI device at a glance — no need to pick up your phone. Companion to the MIDI Recorder Android app, a Bluetooth MIDI / piano recorder.
