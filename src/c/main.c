@@ -89,6 +89,8 @@ static void outbox_failed(DictionaryIterator *iter, AppMessageResult reason, voi
 static void outbox_sent(DictionaryIterator *iter, void *context) {
   if (s_close_after_send) {
     s_close_after_send = false;
+    // Action done: exit to the watchface, not back to the launcher.
+    exit_reason_set(APP_EXIT_ACTION_PERFORMED_SUCCESSFULLY);
     window_stack_pop_all(true); // single-window app -> this exits the app
   }
 }
