@@ -3,6 +3,7 @@
 #define NAME_LEN 32
 #define SEND_RETRY_MS 2500
 #define MAX_AUTO_RETRIES 3
+#define PERSIST_KEY_AUTO_CLOSE 1
 
 #define HEADER_H     50   // big "REC m:ss" / "Ready" header
 #define STATUS_ROW_H 44   // connecting/error/no-device row
@@ -22,6 +23,9 @@ static int s_conn_count = 0;    // connected BLE device count
 static uint8_t s_last_cmd = 1;
 static int s_retries = 0;
 static AppTimer *s_retry_timer = NULL;
+
+static bool s_auto_close = true;        // CFG_AUTO_CLOSE; persisted
+static bool s_close_after_send = false; // set on a Start/Stop tap; exits in outbox_sent
 
 // CMD values: 1=request, 2=start, 3=stop
 static void send_cmd(uint8_t cmd);
@@ -54,6 +58,11 @@ static void inbox_received(DictionaryIterator *iter, void *context) {
   }
   if ((t = dict_find(iter, MESSAGE_KEY_ST_REC_START))) s_rec_start = t->value->int32;
   if ((t = dict_find(iter, MESSAGE_KEY_ST_CONN))) s_conn_count = (int)t->value->int32;
+  if ((t = dict_find(iter, MESSAGE_KEY_CFG_AUTO_CLOSE))) {
+    s_auto_close = (t->value->int32 != 0);
+    persist_write_bool(PERSIST_KEY_AUTO_CLOSE, s_auto_close);
+    APP_LOG(APP_LOG_LEVEL_INFO, "CFG_AUTO_CLOSE = %d", (int)s_auto_close);
+  }
 
   s_conn = CONN_READY;
   s_retries = 0;
@@ -71,12 +80,18 @@ static void outbox_failed(DictionaryIterator *iter, AppMessageResult reason, voi
     if (s_retry_timer) app_timer_cancel(s_retry_timer);
     s_retry_timer = app_timer_register(SEND_RETRY_MS, retry_timer_cb, NULL);
   } else {
+    s_close_after_send = false;
     s_conn = CONN_ERROR;
     if (s_menu) menu_layer_reload_data(s_menu);
   }
 }
 
-static void outbox_sent(DictionaryIterator *iter, void *context) {}
+static void outbox_sent(DictionaryIterator *iter, void *context) {
+  if (s_close_after_send) {
+    s_close_after_send = false;
+    window_stack_pop_all(true); // single-window app -> this exits the app
+  }
+}
 
 static uint16_t menu_num_rows(MenuLayer *m, uint16_t section, void *ctx) {
   return 1; // always one row: either the action row or the status row
@@ -142,7 +157,8 @@ static void menu_draw_row(GContext *ctx, const Layer *cell, MenuIndex *idx, void
 }
 
 static void menu_select(MenuLayer *m, MenuIndex *idx, void *c) {
-  if (showing_status_row()) { request(1); return; }     // refresh / retry
+  if (showing_status_row()) { s_close_after_send = false; request(1); return; } // refresh / retry
+  s_close_after_send = s_auto_close;                    // exit once the Start/Stop is delivered
   if (s_recording) { request(3); } else { request(2); } // stop / start
 }
 
@@ -172,6 +188,10 @@ static void init(void) {
   app_message_register_outbox_failed(outbox_failed);
   app_message_register_outbox_sent(outbox_sent);
   app_message_open(256, 64);
+
+  if (persist_exists(PERSIST_KEY_AUTO_CLOSE)) {
+    s_auto_close = persist_read_bool(PERSIST_KEY_AUTO_CLOSE);
+  }
 
   s_window = window_create();
   window_set_window_handlers(s_window, (WindowHandlers) { .load = window_load, .unload = window_unload });
