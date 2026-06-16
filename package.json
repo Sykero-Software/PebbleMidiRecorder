@@ -2,21 +2,37 @@
   "name": "midi-control",
   "author": "Sykerö Software",
   "version": "1.0.0",
-  "keywords": ["pebble-app"],
+  "keywords": [
+    "pebble-app"
+  ],
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "pebble-clay": "^1.0.4"
+  },
   "pebble": {
     "displayName": "MIDI Recorder",
     "uuid": "4F677262-4364-4F8F-800A-E0FB6C439096",
     "sdkVersion": "3",
-    "enableMultiJS": false,
-    "targetPlatforms": ["aplite", "basalt", "chalk", "diorite", "emery", "flint", "gabbro"],
+    "enableMultiJS": true,
+    "targetPlatforms": [
+      "aplite",
+      "basalt",
+      "chalk",
+      "diorite",
+      "emery",
+      "flint",
+      "gabbro"
+    ],
     "capabilities": [],
-    "watchapp": { "watchface": false },
+    "watchapp": {
+      "watchface": false
+    },
     "companionApp": {
       "android": {
         "apps": [
-          { "package": "fi.sykero.midirecorder" }
+          {
+            "package": "fi.sykero.midirecorder"
+          }
         ]
       }
     },
@@ -25,11 +41,17 @@
       "ST_RECORDING",
       "ST_DEVICE_NAME",
       "ST_REC_START",
-      "ST_CONN"
+      "ST_CONN",
+      "CFG_AUTO_CLOSE"
     ],
     "resources": {
       "media": [
-        { "type": "bitmap", "menuIcon": true, "name": "MENU_ICON", "file": "images/menuicon.png" }
+        {
+          "type": "bitmap",
+          "menuIcon": true,
+          "name": "MENU_ICON",
+          "file": "images/menuicon.png"
+        }
       ]
     }
   }
