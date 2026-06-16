@@ -19,3 +19,7 @@ pebble install --cloudpebble app.pbw  # install to a paired phone via the cloud 
 ## Documentation
 
 Full SDK docs, tutorials, and API reference: <https://developer.repebble.com>
+
+## Support
+
+Questions, feedback or bug reports: <pebble.midirecord@sykero.fi>
