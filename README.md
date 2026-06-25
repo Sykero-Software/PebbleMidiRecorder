@@ -8,6 +8,8 @@ Android 2.
 
 App name: **MIDI Recorder** · UUID `4F677262-4364-4F8F-800A-E0FB6C439096`.
 
+**[Install from the Pebble appstore →](https://apps.repebble.com/midi-recorder_4e0ab343fe694b889ef1808d)**
+
 ## Building & running
 
 ```sh
@@ -23,3 +25,6 @@ Full SDK docs, tutorials, and API reference: <https://developer.repebble.com>
 ## Support
 
 Questions, feedback or bug reports: <pebble.midirecord@sykero.fi>
+
+Browse all Sykerö Software apps on the Pebble appstore:
+<https://apps.repebble.com/apps/dev/syker-software_9f6c9c6e9ce88af6a0db953e>
