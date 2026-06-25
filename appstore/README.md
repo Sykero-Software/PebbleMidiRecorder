@@ -16,10 +16,10 @@ ready to upload. **Watchapp** listing (requires the full asset set).
 ## Assets
 
 - **Icons (committed here):** `icon-144.png` (large) + `icon-80.png` (small) —
-  the MIDI Recorder Android launcher artwork (Einstein + piano + record dot) on
-  its dark background, frame removed, so the watchapp matches its Android
-  counterpart. Hand-finished art, so kept under version control (not regenerable
-  from `gen-appstore-assets.py`).
+  the MIDI Recorder Android launcher foreground (Einstein + piano + record dot)
+  used directly, flattened on white, so the watchapp matches its Android
+  counterpart. NB: this carries the launcher's transparent safe-zone margin as a
+  white frame — accepted for the first release, to be refined later.
 - **Marketing banner** 720×320 PNG — optional; `pebble publish` takes no banner
   flag, so add one on the appstore dashboard afterwards if wanted.
 - **Screenshots** — ≥1 per supported platform, **unframed**, native resolution;
