@@ -1,7 +1,7 @@
 {
   "name": "midi-control",
   "author": "Sykerö Software",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "keywords": [
     "pebble-app"
   ],
@@ -40,7 +40,8 @@
       "ST_DEVICE_NAME",
       "ST_REC_START",
       "ST_CONN",
-      "CFG_AUTO_CLOSE"
+      "CFG_AUTO_CLOSE",
+      "CFG_IDLE_EXIT_SEC"
     ],
     "resources": {
       "media": [

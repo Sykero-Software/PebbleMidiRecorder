@@ -4,6 +4,7 @@
 #define SEND_RETRY_MS 2500
 #define MAX_AUTO_RETRIES 3
 #define PERSIST_KEY_AUTO_CLOSE 1
+#define PERSIST_KEY_IDLE_EXIT  2   // idle auto-exit timeout, seconds (0 = off)
 
 #define HEADER_H     50   // big "REC m:ss" / "Ready" header
 #define STATUS_ROW_H 44   // connecting/error/no-device row
@@ -29,6 +30,41 @@ static bool s_close_after_send = false; // set on a Start/Stop tap; exits in out
 
 // CMD values: 1=request, 2=start, 3=stop
 static void send_cmd(uint8_t cmd);
+
+// ---- idle auto-exit: return to the watchface after s_idle_timeout_sec of no
+// button press. Armed in the window's .appear, cancelled in .disappear, reset by
+// menu_select. 0 = off; default 15s (persist + config). Recording continues on
+// the phone after exit (the watch is only a remote). ----
+static int       s_idle_timeout_sec = 15;
+static AppTimer *s_idle_timer = NULL;
+
+static void idle_cancel(void) {
+  if (s_idle_timer) { app_timer_cancel(s_idle_timer); s_idle_timer = NULL; }
+}
+static void idle_fire(void *ctx) {
+  s_idle_timer = NULL;
+  exit_reason_set(APP_EXIT_ACTION_PERFORMED_SUCCESSFULLY);
+  window_stack_pop_all(true);   // single-window app -> exits to the watchface
+}
+static void idle_reset(void) {
+  if (s_idle_timeout_sec <= 0) { idle_cancel(); return; }
+  if (s_idle_timer) { app_timer_reschedule(s_idle_timer, s_idle_timeout_sec * 1000); }
+  else { s_idle_timer = app_timer_register(s_idle_timeout_sec * 1000, idle_fire, NULL); }
+}
+// Tolerant read: default Clay auto-send delivers a `select` as a CString. -1 =
+// key absent. NB: hand-rolled digit parse — atoi/strtol are NOT exported by the
+// Core firmware (hard fault).
+static int idle_read_seconds(Tuple *t) {
+  if (!t) { return -1; }
+  if (t->type == TUPLE_CSTRING) {
+    int v = 0; const char *p = t->value->cstring;
+    while (*p >= '0' && *p <= '9') { v = v * 10 + (*p++ - '0'); }
+    return v;
+  }
+  return (int)t->value->int32;
+}
+static void idle_appear(Window *w) { idle_reset(); }
+static void idle_disappear(Window *w) { idle_cancel(); }
 
 // Whether we have a "real" action row (Start needs a connected device; Stop always shown while recording).
 static bool has_action_row() { return s_recording || s_conn_count > 0; }
@@ -62,6 +98,14 @@ static void inbox_received(DictionaryIterator *iter, void *context) {
     s_auto_close = (t->value->int32 != 0);
     persist_write_bool(PERSIST_KEY_AUTO_CLOSE, s_auto_close);
     APP_LOG(APP_LOG_LEVEL_INFO, "CFG_AUTO_CLOSE = %d", (int)s_auto_close);
+  }
+  if ((t = dict_find(iter, MESSAGE_KEY_CFG_IDLE_EXIT_SEC))) {
+    int isec = idle_read_seconds(t);
+    if (isec >= 0) {
+      s_idle_timeout_sec = isec;
+      persist_write_int(PERSIST_KEY_IDLE_EXIT, isec);
+      idle_reset();
+    }
   }
 
   s_conn = CONN_READY;
@@ -159,6 +203,7 @@ static void menu_draw_row(GContext *ctx, const Layer *cell, MenuIndex *idx, void
 }
 
 static void menu_select(MenuLayer *m, MenuIndex *idx, void *c) {
+  idle_reset();
   if (showing_status_row()) { s_close_after_send = false; request(1); return; } // refresh / retry
   s_close_after_send = s_auto_close;                    // exit once the Start/Stop is delivered
   if (s_recording) { request(3); } else { request(2); } // stop / start
@@ -194,9 +239,13 @@ static void init(void) {
   if (persist_exists(PERSIST_KEY_AUTO_CLOSE)) {
     s_auto_close = persist_read_bool(PERSIST_KEY_AUTO_CLOSE);
   }
+  if (persist_exists(PERSIST_KEY_IDLE_EXIT)) {
+    s_idle_timeout_sec = persist_read_int(PERSIST_KEY_IDLE_EXIT);
+  }
 
   s_window = window_create();
-  window_set_window_handlers(s_window, (WindowHandlers) { .load = window_load, .unload = window_unload });
+  window_set_window_handlers(s_window, (WindowHandlers) { .load = window_load, .unload = window_unload,
+    .appear = idle_appear, .disappear = idle_disappear });
 #ifdef SCREENSHOT_FIXTURES
   // Demo state for appstore screenshots (no phone): recording, one device connected.
   s_conn = CONN_READY;
@@ -213,6 +262,7 @@ static void init(void) {
 }
 static void deinit(void) {
   if (s_retry_timer) { app_timer_cancel(s_retry_timer); s_retry_timer = NULL; }
+  idle_cancel();
   window_destroy(s_window);
 }
 int main(void) { init(); app_event_loop(); deinit(); }
