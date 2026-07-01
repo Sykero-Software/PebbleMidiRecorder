@@ -41,7 +41,8 @@
       "ST_REC_START",
       "ST_CONN",
       "CFG_AUTO_CLOSE",
-      "CFG_IDLE_EXIT_SEC"
+      "CFG_IDLE_EXIT_SEC",
+      "CFG_OPEN"
     ],
     "resources": {
       "media": [
